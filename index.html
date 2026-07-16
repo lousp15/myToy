@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>六爻占卜</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "STSong", "SimSun", "Microsoft YaHei", serif;
+  background: linear-gradient(135deg, #1a0a00 0%, #2d1810 30%, #1a0a00 100%);
+  min-height: 100vh;
+  color: #d4b896;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.container {
+  background: linear-gradient(180deg, #2d1810 0%, #1a0a00 100%);
+  border: 2px solid #8b6914;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 0 60px rgba(139,105,20,0.15), inset 0 0 60px rgba(139,105,20,0.05);
+  position: relative;
+}
+h1 {
+  text-align: center;
+  font-size: 28px;
+  color: #d4a84b;
+  margin-bottom: 4px;
+  letter-spacing: 8px;
+  font-weight: 400;
+  text-shadow: 0 0 20px rgba(212,168,75,0.3);
+}
+.subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #8b7355;
+  margin-bottom: 24px;
+  letter-spacing: 4px;
+}
+.turtle-area {
+  text-align: center;
+  margin-bottom: 20px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.turtle-area.disabled { pointer-events: none; opacity: 0.6; }
+.turtle-shell {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto;
+  position: relative;
+  transition: transform 0.15s;
+}
+.turtle-shell:active { transform: scale(0.92); }
+.turtle-shell svg { width: 100%; height: 100%; }
+.shake {
+  animation: shakeAnim 0.6s ease-in-out;
+}
+@keyframes shakeAnim {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-15deg) translateX(-4px); }
+  20% { transform: rotate(12deg) translateX(4px); }
+  30% { transform: rotate(-10deg) translateX(-3px); }
+  40% { transform: rotate(8deg) translateX(3px); }
+  50% { transform: rotate(-6deg) translateX(-2px); }
+  60% { transform: rotate(4deg) translateX(2px); }
+  70% { transform: rotate(-3deg) translateX(-1px); }
+  80% { transform: rotate(2deg) translateX(1px); }
+  90% { transform: rotate(-1deg); }
+}
+.coin-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  min-height: 80px;
+  align-items: center;
+}
+.coin {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.3s;
+}
+.coin-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+  border: 2px solid #8b6914;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.coin.yang .coin-inner {
+  background: radial-gradient(circle at 35% 35%, #e8c84a, #c49a2a, #8b6914);
+  color: #5a3e0a;
+}
+.coin.yin .coin-inner {
+  background: radial-gradient(circle at 35% 35%, #c0b090, #a09070, #7a6a50);
+  color: #3a2a1a;
+}
+.coin-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  white-space: nowrap;
+  color: #8b7355;
+}
+.coin-toss {
+  animation: tossCoin 0.5s ease-out;
+}
+@keyframes tossCoin {
+  0% { transform: rotateY(0deg) translateY(0); }
+  50% { transform: rotateY(720deg) translateY(-30px); }
+  100% { transform: rotateY(720deg) translateY(0); }
+}
+.result-text {
+  text-align: center;
+  font-size: 18px;
+  min-height: 30px;
+  margin: 16px 0;
+  color: #d4a84b;
+}
+.click-hint {
+  text-align: center;
+  font-size: 14px;
+  color: #8b7355;
+  margin-bottom: 16px;
+}
+.hexagram-display {
+  background: rgba(139,105,20,0.08);
+  border: 1px solid rgba(139,105,20,0.3);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 16px 0;
+  min-height: 220px;
+}
+.hexagram-title {
+  text-align: center;
+  font-size: 22px;
+  color: #d4a84b;
+  margin-bottom: 16px;
+  letter-spacing: 4px;
+  min-height: 32px;
+}
+.hexagram-lines {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 6px;
+}
+.hex-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.hex-line.visible { opacity: 1; }
+.hex-line .line-label {
+  font-size: 12px;
+  color: #8b7355;
+  width: 40px;
+  text-align: right;
+}
+.hex-line .line-status {
+  font-size: 12px;
+  color: #a08060;
+  width: 50px;
+  text-align: left;
+}
+.hex-line .line-svg {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.hex-line .line-svg svg { display: block; }
+.hex-line .changing-mark {
+  color: #c0392b;
+  font-size: 14px;
+  margin-left: 4px;
+  width: 16px;
+}
+.hexagram-name {
+  text-align: center;
+  font-size: 18px;
+  color: #d4a84b;
+  margin-top: 12px;
+  padding: 8px;
+  border-top: 1px solid rgba(139,105,20,0.2);
+}
+.hexagram-reading {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(139,105,20,0.06);
+  border-radius: 8px;
+  border: 1px solid rgba(139,105,20,0.15);
+}
+.reading-label {
+  font-size: 12px;
+  color: #a08050;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.reading-text {
+  font-size: 14px;
+  color: #c8b088;
+  line-height: 1.7;
+}
+.reset-btn {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 32px;
+  background: linear-gradient(180deg, #8b6914, #5a4510);
+  border: 1px solid #a08030;
+  border-radius: 8px;
+  color: #d4b896;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 2px;
+}
+.reset-btn:hover { background: linear-gradient(180deg, #a08030, #6a5520); }
+.reset-btn:active { transform: scale(0.96); }
+.progress-text {
+  text-align: center;
+  font-size: 13px;
+  color: #6a5540;
+  margin-top: 8px;
+}
+.古法-text {
+  text-align: center;
+  font-size: 11px;
+  color: #5a4530;
+  margin-top: 16px;
+  line-height: 1.6;
+  padding: 0 10px;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hex-line.visible { animation: fadeInUp 0.4s ease-out; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>六爻占卜</h1>
+  <div class="subtitle">— 龟壳摇卦 —</div>
+
+  <div class="turtle-area" id="turtleArea">
+    <div class="turtle-shell" id="turtleShell">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="shellGrad" cx="50%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="#5a3e20"/>
+            <stop offset="60%" stop-color="#3a2810"/>
+            <stop offset="100%" stop-color="#1a1008"/>
+          </radialGradient>
+          <radialGradient id="shellHighlight" cx="40%" cy="30%" r="40%">
+            <stop offset="0%" stop-color="rgba(180,140,60,0.25)"/>
+            <stop offset="100%" stop-color="rgba(180,140,60,0)"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="60" cy="58" rx="48" ry="40" fill="url(#shellGrad)" stroke="#6a5020" stroke-width="1.5"/>
+        <ellipse cx="60" cy="58" rx="48" ry="40" fill="url(#shellHighlight)"/>
+        <path d="M30 42 Q60 30 90 42" fill="none" stroke="#6a5020" stroke-width="0.8" opacity="0.5"/>
+        <path d="M25 55 Q60 45 95 55" fill="none" stroke="#6a5020" stroke-width="0.8" opacity="0.4"/>
+        <path d="M28 68 Q60 58 92 68" fill="none" stroke="#6a5020" stroke-width="0.8" opacity="0.3"/>
+        <path d="M42 32 L45 50" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.3"/>
+        <path d="M78 32 L75 50" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.3"/>
+        <path d="M60 28 L60 46" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.3"/>
+        <ellipse cx="30" cy="75" rx="8" ry="14" fill="#3a2810" stroke="#5a3e20" stroke-width="1"/>
+        <ellipse cx="90" cy="75" rx="8" ry="14" fill="#3a2810" stroke="#5a3e20" stroke-width="1"/>
+        <ellipse cx="30" cy="84" rx="10" ry="5" fill="#2a1a0a" stroke="#4a3018" stroke-width="0.8"/>
+        <ellipse cx="90" cy="84" rx="10" ry="5" fill="#2a1a0a" stroke="#4a3018" stroke-width="0.8"/>
+        <ellipse cx="60" cy="96" rx="6" ry="4" fill="#2a1a0a" stroke="#4a3018" stroke-width="0.8"/>
+        <path d="M12 50 Q6 42 8 35 Q12 28 20 30" fill="none" stroke="#3a2810" stroke-width="2" stroke-linecap="round"/>
+        <path d="M108 50 Q114 42 112 35 Q108 28 100 30" fill="none" stroke="#3a2810" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="60" cy="52" r="3" fill="#6a5020" opacity="0.3"/>
+        <path d="M60 40 Q62 36 60 32" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.2"/>
+        <path d="M50 42 Q52 38 50 34" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.2"/>
+        <path d="M70 42 Q68 38 70 34" fill="none" stroke="#6a5020" stroke-width="0.5" opacity="0.2"/>
+      </svg>
+    </div>
+    <div class="click-hint" id="clickHint">点击龟壳开始摇卦</div>
+  </div>
+
+  <div class="coin-container" id="coinContainer">
+    <div class="coin" id="coin1"><div class="coin-inner" id="coin1Inner">?</div></div>
+    <div class="coin" id="coin2"><div class="coin-inner" id="coin2Inner">?</div></div>
+    <div class="coin" id="coin3"><div class="coin-inner" id="coin3Inner">?</div></div>
+  </div>
+
+  <div class="result-text" id="resultText"></div>
+
+  <div class="hexagram-display">
+    <div class="hexagram-title" id="hexagramTitle">尚未起卦</div>
+    <div class="hexagram-lines" id="hexagramLines">
+      <div class="hex-line" data-index="0"><div class="line-label">初爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="1"><div class="line-label">二爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="2"><div class="line-label">三爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="3"><div class="line-label">四爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="4"><div class="line-label">五爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="5"><div class="line-label">上爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+    </div>
+    <div class="hexagram-name" id="hexagramName"></div>
+    <div class="hexagram-reading" id="hexagramReading" style="display:none;">
+      <div class="reading-label">卦辞</div>
+      <div class="reading-text" id="judgmentText"></div>
+      <div class="reading-label" style="margin-top:8px;">解读</div>
+      <div class="reading-text" id="interpretationText"></div>
+    </div>
+  </div>
+
+  <div class="hexagram-display" id="changedDisplay" style="display:none; margin-top:12px;">
+    <div class="hexagram-title" id="changedTitle">变卦</div>
+    <div class="hexagram-lines" id="changedLines">
+      <div class="hex-line" data-index="0"><div class="line-label">初爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="1"><div class="line-label">二爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="2"><div class="line-label">三爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="3"><div class="line-label">四爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="4"><div class="line-label">五爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+      <div class="hex-line" data-index="5"><div class="line-label">上爻</div><div class="line-svg"></div><div class="line-status"></div><div class="changing-mark"></div></div>
+    </div>
+    <div class="hexagram-name" id="changedName"></div>
+  </div>
+
+  <div class="progress-text" id="progressText">还剩 6 次</div>
+
+  <button class="reset-btn" id="resetBtn">重新起卦</button>
+
+  <div class="古法-text">
+    默念所测之事，点击龟壳摇卦。每卦六爻，自下而上。<br>
+    乾隆通宝：汉字为阳（3），满文为阴（2）。
+  </div>
+</div>
+
+<script>
+const COIN_SIDES = {
+  YANG: { name: '阳', label: '汉字', value: 3, className: 'yang' },
+  YIN: { name: '阴', label: '满文', value: 2, className: 'yin' },
+};
+
+const LINE_TYPES = {
+  LAO_YIN: { name: '老阴', score: 6, changing: true, yang: false },
+  SHAO_YANG: { name: '少阳', score: 7, changing: false, yang: true },
+  SHAO_YIN: { name: '少阴', score: 8, changing: false, yang: false },
+  LAO_YANG: { name: '老阳', score: 9, changing: true, yang: true },
+};
+
+const LINE_LABELS = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'];
+
+// 64 hexagrams: key = 6-bit binary string (bottom to top, yang=1, yin=0)
+const TRIGRAM_BITS = { 乾: "111", 兑: "110", 离: "101", 震: "100", 巽: "011", 坎: "010", 艮: "001", 坤: "000" };
+function hexKey(lower, upper) { return TRIGRAM_BITS[lower] + TRIGRAM_BITS[upper]; }
+const H = (lower, upper, num, name, sym) => ({ key: hexKey(lower, upper), num, name, sym });
+const hexList = [
+  H("乾","乾",1,"乾为天","䷀"), H("坤","坤",2,"坤为地","䷁"),
+  H("震","坎",3,"水雷屯","䷂"), H("坎","艮",4,"山水蒙","䷃"),
+  H("乾","坎",5,"水天需","䷄"), H("坎","乾",6,"天水讼","䷅"),
+  H("坎","坤",7,"地水师","䷆"), H("坤","坎",8,"水地比","䷇"),
+  H("乾","巽",9,"风天小畜","䷈"), H("兑","乾",10,"天泽履","䷉"),
+  H("乾","坤",11,"地天泰","䷊"), H("坤","乾",12,"天地否","䷋"),
+  H("离","乾",13,"天火同人","䷌"), H("乾","离",14,"火天大有","䷍"),
+  H("艮","坤",15,"地山谦","䷎"), H("坤","震",16,"雷地豫","䷏"),
+  H("震","兑",17,"泽雷随","䷐"), H("巽","艮",18,"山风蛊","䷑"),
+  H("兑","坤",19,"地泽临","䷒"), H("坤","巽",20,"风地观","䷓"),
+  H("震","离",21,"火雷噬嗑","䷔"), H("离","艮",22,"山火贲","䷕"),
+  H("坤","艮",23,"山地剥","䷖"), H("震","坤",24,"地雷复","䷗"),
+  H("震","乾",25,"天雷无妄","䷘"), H("乾","艮",26,"山天大畜","䷙"),
+  H("震","艮",27,"山雷颐","䷚"), H("巽","兑",28,"泽风大过","䷛"),
+  H("坎","坎",29,"坎为水","䷜"), H("离","离",30,"离为火","䷝"),
+  H("艮","兑",31,"泽山咸","䷞"), H("巽","震",32,"雷风恒","䷟"),
+  H("艮","乾",33,"天山遁","䷠"), H("乾","震",34,"雷天大壮","䷡"),
+  H("坤","离",35,"火地晋","䷢"), H("离","坤",36,"地火明夷","䷣"),
+  H("离","巽",37,"风火家人","䷤"), H("兑","离",38,"火泽睽","䷥"),
+  H("艮","坎",39,"水山蹇","䷦"), H("坎","震",40,"雷水解","䷧"),
+  H("兑","艮",41,"山泽损","䷨"), H("震","巽",42,"风雷益","䷩"),
+  H("乾","兑",43,"泽天夬","䷪"), H("巽","乾",44,"天风姤","䷫"),
+  H("坤","兑",45,"泽地萃","䷬"), H("巽","坤",46,"地风升","䷭"),
+  H("坎","兑",47,"泽水困","䷮"), H("巽","坎",48,"水风井","䷯"),
+  H("离","兑",49,"泽火革","䷰"), H("巽","离",50,"火风鼎","䷱"),
+  H("震","震",51,"震为雷","䷲"), H("艮","艮",52,"艮为山","䷳"),
+  H("艮","巽",53,"风山渐","䷴"), H("兑","震",54,"雷泽归妹","䷵"),
+  H("离","震",55,"雷火丰","䷶"), H("艮","离",56,"火山旅","䷷"),
+  H("巽","巽",57,"巽为风","䷸"), H("兑","兑",58,"兑为泽","䷹"),
+  H("坎","巽",59,"风水涣","䷺"), H("兑","坎",60,"水泽节","䷻"),
+  H("兑","巽",61,"风泽中孚","䷼"), H("艮","震",62,"雷山小过","䷽"),
+  H("离","坎",63,"水火既济","䷾"), H("坎","离",64,"火水未济","䷿"),
+];
+const HEXAGRAMS = {};
+hexList.forEach(h => { HEXAGRAMS[h.key] = { num: h.num, name: h.name, symbol: h.sym }; });
+
+const INTERPRET = {};
+const INT = (num, j, d) => { INTERPRET[hexList[num-1].key] = { j, d }; };
+INT(1, "元亨利贞", "龙行天下，自强不息。创始通达，宜于守正。阳刚至极，须防过刚易折，宜谦逊自省。");
+INT(2, "元亨，利牝马之贞", "厚德载物，包容万物。柔顺中正，宜追随而非主导。以柔克刚，安贞吉祥。");
+INT(3, "元亨利贞，勿用有攸往", "创始艰难，萌芽初生。事物草创之际，宜守不宜进，待时而动，可获亨通。");
+INT(4, "亨。匪我求童蒙，童蒙求我", "蒙昧初开，求学之象。宜虚心请教，不可好为人师。启蒙之道，贵在引导。");
+INT(5, "有孚，光亨，贞吉", "等待时机，心怀诚信。云行于天，待时降雨。守正待时，自有光明亨通。");
+INT(6, "有孚窒惕，中吉", "争讼之象，宜和解不宜争斗。理直则中吉，强辩终凶。退一步海阔天空。");
+INT(7, "贞丈人吉，无咎", "统兵之道，宜用老成持重之人。师出有名，严明纪律，可获吉祥。");
+INT(8, "吉。原筮元永贞，无咎", "亲附团结之道。择善而从，以诚相待。互相亲近，和睦共处则吉。");
+INT(9, "亨。密云不雨", "小有积蓄，尚未充沛。宜修身养德，积累力量。勿贪多求快，循序渐进。");
+INT(10, "履虎尾，不咥人，亨", "如履薄冰，谨慎行事。虽处险境，以柔履刚，戒慎恐惧则无灾祸。");
+INT(11, "小往大来，吉亨", "天地交融，万物通达。安泰之时，阴阳和合。宜顺势而为，大有作为。");
+INT(12, "否之匪人，不利君子贞", "闭塞不通，天地不交。君子退隐，俭德避难。坚守正道，等待否极泰来。");
+INT(13, "同人于野，亨", "与人同心，天下大同。破除门户之见，广泛团结。志同道合则事无不成。");
+INT(14, "元亨", "丰收大有，物阜民丰。顺天应人，富有而仁。居安思危，善用其有。");
+INT(15, "亨，君子有终", "谦虚谨慎，德高望重。满招损，谦受益。以谦卑处世，万事可成。");
+INT(16, "利建侯行师", "顺时而动，安乐喜悦。宜建立功业，兴利除弊。然不可过分安逸，须未雨绸缪。");
+INT(17, "元亨利贞，无咎", "随顺时势，灵活变通。顺应潮流而不固执，随从正道而不苟且。");
+INT(18, "元亨，利涉大川", "整顿积弊，革故鼎新。腐败之中蕴含生机，治乱之道在于果断。");
+INT(19, "元亨利贞", "居高临下，以上临下。以德服人而非以力服人。临近之际，宜怀柔感化。");
+INT(20, "盥而不荐，有孚颙若", "观察之道，由表及里。以诚敬之心观察世事，不轻举妄动，静观其变。");
+INT(21, "亨，利用狱", "咬合咀嚼，清除障碍。宜于明断是非，决断疑难。果断处理积弊。");
+INT(22, "亨。小利有攸往", "文饰美化，锦上添花。重实质而轻形式，不可过分追求华丽。");
+INT(23, "不利有攸往", "剥落衰败，小人当道。宜顺时而止，保存实力。剥极而复，曙光在前。");
+INT(24, "亨。出入无疾", "一阳来复，生机萌发。冬去春来，万象更新。宜顺势恢复，休养生息。");
+INT(25, "元亨利贞。其匪正有眚", "不妄为则吉。顺其自然，不存非分之想。妄动则有灾，守正则亨通。");
+INT(26, "利贞，不家食吉", "积蓄德才，厚积薄发。宜于外出发展，施展抱负。蓄养刚健，待时而动。");
+INT(27, "贞吉。观颐，自求口实", "颐养之道，自食其力。养身养德，言语谨慎。自求口实，不依赖他人。");
+INT(28, "栋桡，利有攸往，亨", "过度之时，力不能支。非常时期需非常之举。宜果断行动，拯弊救危。");
+INT(29, "习坎，有孚，维心亨", "险中求进，履险如夷。以诚信智慧面对困难，内心亨通则险可渡。");
+INT(30, "利贞，亨", "光明照耀，依附中正。火之德在明，人之德在附丽。文明昌盛之象。");
+INT(31, "亨，利贞，取女吉", "感应相通，天地交融。以谦虚诚意感召他人，男女相悦，万事可成。");
+INT(32, "亨，无咎，利贞", "持之以恒，恒久之道。守正不移，日新其德。恒则通达，变则生乱。");
+INT(33, "亨，小利贞", "退避隐让，以退为进。君子见机，知进知退。退避非怯懦，乃保身之道。");
+INT(34, "利贞", "阳刚壮盛，大有所为。然壮而不可妄，宜于守正。壮而无正则凶。");
+INT(35, "康侯用锡马蕃庶", "前进上升，光明普照。如旭日东升，前途光明。宜积极进取。");
+INT(36, "利艰贞", "光明受伤，韬光养晦。处晦而明，内心坚定。艰难中守正，终见光明。");
+INT(37, "利女贞", "家道之卦，各尽其责。内外有别，和睦相处。家道正则万事兴。");
+INT(38, "小事吉", "乖离分歧，宜求同存异。大事不可为，小事尚可。以柔道化解矛盾。");
+INT(39, "利西南，不利东北", "前路艰险，行路困难。知难而进，见险而止。宜寻求援助，共度难关。");
+INT(40, "利西南", "解脱困境，如释重负。雷雨交加，洗清污浊。宜顺势化解，向南发展。");
+INT(41, "有孚，元吉，无咎", "减损之道，损己利人。损有余补不足，损私欲以存天理。诚信则吉。");
+INT(42, "利有攸往，利涉大川", "增益之道，助人为善。见善则迁，有过则改。顺势而为，大有增益。");
+INT(43, "扬于王庭，孚号有厉", "决断果敢，切除弊病。当断不断反受其乱。以诚信号召，决策宜速。");
+INT(44, "女壮，勿用取女", "不期而遇，意外相逢。遇合之道，贵在自然。不可强求，不可苟合。");
+INT(45, "亨。王假有庙", "聚集荟萃，众志成城。精英汇聚之时，宜祭祀先祖，团结人心。");
+INT(46, "元亨，用见大人", "上升进步，由卑至高。顺势上升，积小成大。宜于进取，得见贵人。");
+INT(47, "亨，贞，大人吉", "困厄之境，守正待时。处困而亨，君子固穷。安守正道，终获亨通。");
+INT(48, "改邑不改井，无丧无得", "井养不穷，恒久不变。修德养民，持之以恒。井德有常，取之不尽。");
+INT(49, "己日乃孚，元亨利贞", "变革之时，除旧布新。顺应天时，变革则吉。革故鼎新，正当其时。");
+INT(50, "元吉，亨", "鼎立新象，调和五味。革故鼎新，建立新秩序。以新代旧，文明进步。");
+INT(51, "亨。震来虩虩，笑言哑哑", "雷霆震怒，警醒自省。临危不惧，处变不惊。戒慎恐惧，终归安宁。");
+INT(52, "艮其背，不获其身", "止而有度，适可而止。知止而后有定，当止则止。动不失其时，止不失其位。");
+INT(53, "女归吉，利贞", "循序渐进，稳步发展。不急于求成，按部就班。如女子出嫁，依礼而行。");
+INT(54, "征凶，无攸利", "归嫁之象，不当其位。情之所至，理有不合。宜反思自省，不可强求。");
+INT(55, "亨，王假之", "丰收丰盛，如日中天。光明盛大之时，宜持盈保泰，居安思危。");
+INT(56, "旅即次，怀其资，得童仆", "旅居在外，漂泊不定。宜谨慎行事，持守正道。旅居他乡，谦逊则安。");
+INT(57, "小亨，利有攸往", "风行天下，无孔不入。顺势而行，柔而不弱。宜于行事，但不可过刚。");
+INT(58, "亨，利贞", "悦而善言，以诚相待。喜悦之道在于真诚。巧言令色则失其正。");
+INT(59, "亨。王假有庙", "涣散之时，聚散之道。人心涣散则散，聚则合。宜收拢人心，重聚力量。");
+INT(60, "亨。苦节不可贞", "节制之道，贵在适中。过苦则人不能受，过奢则流于放纵。节而不过则亨。");
+INT(61, "豚鱼吉，利涉大川", "内诚外信，中孚之道。以诚信感化万物，虽豚鱼亦可得。至诚如神。");
+INT(62, "亨，利贞", "小有过失，无伤大雅。宜谨慎行事，知错即改。小事可过，大事不可过。");
+INT(63, "亨小，利贞", "事已成功，初吉终乱。成功之后须防懈怠。慎终如始则无败事。");
+INT(64, "亨。小狐汔济，濡其尾", "事未完成，功亏一篑。行百里者半九十，慎终如始。欲速则不达。");
+
+let state = {
+  lines: [],
+  currentStep: 0,
+  isAnimating: false,
+  completed: false,
+};
+
+function randomCoin() {
+  return Math.random() < 0.5 ? COIN_SIDES.YANG : COIN_SIDES.YIN;
+}
+
+function tossCoins() {
+  const coins = [randomCoin(), randomCoin(), randomCoin()];
+  const total = coins.reduce((s, c) => s + c.value, 0);
+  let lineType;
+  if (total === 6) lineType = LINE_TYPES.LAO_YIN;
+  else if (total === 7) lineType = LINE_TYPES.SHAO_YANG;
+  else if (total === 8) lineType = LINE_TYPES.SHAO_YIN;
+  else if (total === 9) lineType = LINE_TYPES.LAO_YANG;
+  return { coins, total, lineType };
+}
+
+function createYangLine() {
+  return `<svg width="100" height="12" viewBox="0 0 100 12"><rect x="0" y="1" width="100" height="10" rx="2" fill="#d4a84b" opacity="0.9"/></svg>`;
+}
+function createYinLine() {
+  return `<svg width="100" height="12" viewBox="0 0 100 12"><rect x="5" y="1" width="38" height="10" rx="2" fill="#d4a84b" opacity="0.9"/><rect x="57" y="1" width="38" height="10" rx="2" fill="#d4a84b" opacity="0.9"/></svg>`;
+}
+
+function renderLineSVG(lineType) {
+  return lineType.yang ? createYangLine() : createYinLine();
+}
+
+function updateHexagramDisplay() {
+  const lineEls = document.querySelectorAll('.hex-line');
+  for (let i = 0; i < 6; i++) {
+    const el = lineEls[i];
+    const label = el.querySelector('.line-label');
+    const svgContainer = el.querySelector('.line-svg');
+    const status = el.querySelector('.line-status');
+    const mark = el.querySelector('.changing-mark');
+
+    if (i < state.lines.length) {
+      const line = state.lines[i];
+      label.textContent = LINE_LABELS[i];
+      svgContainer.innerHTML = renderLineSVG(line.lineType);
+      status.textContent = line.lineType.name;
+      mark.textContent = line.lineType.changing ? '●' : '';
+      el.classList.add('visible');
+    } else {
+      svgContainer.innerHTML = '';
+      status.textContent = '';
+      mark.textContent = '';
+      el.classList.remove('visible');
+    }
+  }
+  document.getElementById('hexagramTitle').textContent =
+    state.lines.length === 0 ? '尚未起卦' : (state.completed ? '本卦' : '起卦中...');
+}
+
+function getHexagramKey() {
+  return state.lines.map(l => l.lineType.yang ? '1' : '0').join('');
+}
+
+function getChangedKey() {
+  return state.lines.map(l => {
+    if (l.lineType.name === '老阳') return '0';
+    if (l.lineType.name === '老阴') return '1';
+    return l.lineType.yang ? '1' : '0';
+  }).join('');
+}
+
+function updateHexagramName() {
+  if (state.lines.length < 6) {
+    document.getElementById('hexagramName').textContent = '';
+    document.getElementById('hexagramReading').style.display = 'none';
+    document.getElementById('changedDisplay').style.display = 'none';
+    return;
+  }
+  const key = getHexagramKey();
+  const h = HEXAGRAMS[key];
+  if (h) {
+    document.getElementById('hexagramName').textContent = `${h.symbol} 第${h.num}卦 · ${h.name}`;
+  } else {
+    document.getElementById('hexagramName').textContent = `第?卦 · 未知`;
+  }
+
+  const interp = INTERPRET[key];
+  if (interp) {
+    document.getElementById('judgmentText').textContent = interp.j;
+    document.getElementById('interpretationText').textContent = interp.d;
+    document.getElementById('hexagramReading').style.display = '';
+  } else {
+    document.getElementById('hexagramReading').style.display = 'none';
+  }
+
+  const hasChanging = state.lines.some(l => l.lineType.changing);
+  if (hasChanging) {
+    const cKey = getChangedKey();
+    const cH = HEXAGRAMS[cKey];
+    const cLines = state.lines.map(l => {
+      if (l.lineType.name === '老阳') return { lineType: { yang: false, name: '阴' } };
+      if (l.lineType.name === '老阴') return { lineType: { yang: true, name: '阳' } };
+      return l;
+    });
+    const cEls = document.querySelectorAll('#changedLines .hex-line');
+    for (let i = 0; i < 6; i++) {
+      const el = cEls[i];
+      el.querySelector('.line-label').textContent = LINE_LABELS[i];
+      const cl = cLines[i];
+      el.querySelector('.line-svg').innerHTML = cl.lineType.yang ? createYangLine() : createYinLine();
+      el.querySelector('.line-status').textContent = cl.lineType.name;
+      el.querySelector('.changing-mark').textContent = '';
+      el.classList.add('visible');
+    }
+    if (cH) {
+      document.getElementById('changedName').textContent = `${cH.symbol} 第${cH.num}卦 · ${cH.name}`;
+    } else {
+      document.getElementById('changedName').textContent = '';
+    }
+    document.getElementById('changedDisplay').style.display = '';
+  } else {
+    document.getElementById('changedDisplay').style.display = 'none';
+  }
+}
+
+function updateProgress() {
+  const remaining = 6 - state.lines.length;
+  document.getElementById('progressText').textContent =
+    remaining > 0 ? `还剩 ${remaining} 次` : '卦象已成';
+  document.getElementById('clickHint').textContent =
+    remaining > 0 ? `点击龟壳开始第${6 - remaining + 1}次摇卦` : '卦已完成，可重新起卦';
+}
+
+function updateResultText(text) {
+  document.getElementById('resultText').textContent = text;
+}
+
+function showCoins(coins, lineType, index) {
+  const coinEls = [1, 2, 3].map(i => document.getElementById(`coin${i}`));
+  const innerEls = [1, 2, 3].map(i => document.getElementById(`coin${i}Inner`));
+
+  coins.forEach((coin, i) => {
+    coinEls[i].className = `coin ${coin.className} coin-toss`;
+    innerEls[i].textContent = coin.label;
+    setTimeout(() => { coinEls[i].classList.remove('coin-toss'); }, 500);
+  });
+
+  setTimeout(() => {
+    updateResultText(`${LINE_LABELS[index]}：${lineType.name}（${lineType.changing ? '动爻' : '静爻'}）`);
+  }, 300);
+}
+
+function performToss() {
+  if (state.isAnimating || state.completed) return;
+  if (state.lines.length >= 6) return;
+
+  state.isAnimating = true;
+  document.getElementById('turtleArea').classList.add('disabled');
+
+  const shell = document.getElementById('turtleShell');
+  shell.classList.remove('shake');
+  void shell.offsetWidth;
+  shell.classList.add('shake');
+
+  const result = tossCoins();
+  const index = state.lines.length;
+
+  setTimeout(() => {
+    showCoins(result.coins, result.lineType, index);
+    state.lines.push({ ...result, index });
+    updateHexagramDisplay();
+    updateProgress();
+
+    if (state.lines.length === 6) {
+      state.completed = true;
+      updateHexagramName();
+      updateResultText('卦象已成，请参看卦辞');
+      document.getElementById('hexagramTitle').textContent = '本卦';
+    }
+
+    state.isAnimating = false;
+    document.getElementById('turtleArea').classList.remove('disabled');
+    shell.classList.remove('shake');
+  }, 600);
+}
+
+function resetAll() {
+  state = { lines: [], currentStep: 0, isAnimating: false, completed: false };
+  const coinEls = [1, 2, 3].map(i => document.getElementById(`coin${i}`));
+  const innerEls = [1, 2, 3].map(i => document.getElementById(`coin${i}Inner`));
+  coinEls.forEach((el, i) => { el.className = 'coin'; innerEls[i].textContent = '?'; });
+  updateResultText('');
+  document.getElementById('hexagramTitle').textContent = '尚未起卦';
+  document.getElementById('hexagramName').textContent = '';
+  document.getElementById('hexagramReading').style.display = 'none';
+  document.getElementById('changedDisplay').style.display = 'none';
+  updateHexagramDisplay();
+  updateProgress();
+  document.getElementById('turtleArea').classList.remove('disabled');
+}
+
+function init() {
+  document.getElementById('turtleArea').addEventListener('click', performToss);
+  document.getElementById('resetBtn').addEventListener('click', resetAll);
+  updateHexagramDisplay();
+  updateProgress();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
